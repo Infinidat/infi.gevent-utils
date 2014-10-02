@@ -47,11 +47,11 @@ DEFERRED_FUNCTIONS = [
     'listdir', 'lseek', 'lstat', 'makedirs', 'mkdir', 'mkfifo', 'mknod', 'openpty', 'pathconf', 'read', 'readlink', 'remove',
     'removedirs', 'rename', 'renames', 'rmdir', 'spawnl', 'spawnle', 'spawnlp', 'spawnlpe', 'spawnv', 'spawnve',
     'spawnvp', 'spawnvpe', 'stat', 'stat_float_times', 'statvfs', 'symlink', 'system', 'tempnam', 'tmpnam', 'unlink',
-    'urandom', 'utime' 'wait', 'wait3', 'wait4', 'waitpid', 'write'
+    'urandom', 'utime' 'wait', 'wait3', 'wait4', 'waitpid', 'write', 'walk'
 ]
 
 NOT_IMPLEMENTED_FUNCTIONS = [
-    'forkpty', 'pipe', 'popen', 'popen2', 'popen3', 'popen4', 'walk'
+    'forkpty', 'pipe', 'popen', 'popen2', 'popen3', 'popen4'
 ]
 
 
