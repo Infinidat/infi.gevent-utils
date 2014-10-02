@@ -1,3 +1,4 @@
+import sys
 from infi.traceback import traceback_decorator
 from infi.pyutils.contexts import contextmanager
 import gevent
@@ -26,7 +27,8 @@ def uncaught_greenlet_exception():
     if _uncaught_exception_handler:
         _uncaught_exception_handler()
     else:
-        logger.exception("uncaught exception in greenlet and uncaught exception handler was set")
+        logger.exception("uncaught exception in greenlet and uncaught exception handler was not set, calling sys.exit")
+        sys.exit("uncaught greenlet exception")
 
 
 @contextmanager
@@ -76,172 +78,36 @@ def safe_spawn_and_switch_immediately(func, *args, **kwargs):
     return greenlet
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def die_on_uncaught_exception_handler(exc_info):
-#     pass
-
-
-# def die_on_greenlet_exceptions(func):
-#     @wraps(func)
-#     def decorated_func(*args, **kwargs):
-#         try:
-#             return func(*args, **kwargs)
-#         except gevent.GreenletExit:
-#             raise
-#         except:
-
-#             reason = "{} raised exception in greenlet and not caught, exitting process.".format(func)
-#             die_now_and_dont_look_back(reason=reason, exc_info=exc_info())
-#     return traceback_decorator(decorated_func)
-
-
-# def return_exceptions_in_greenlet(func):
-#     @wraps(func)
-#     def decorated_func(*args, **kwargs):
-#         try:
-#             return func(*args, **kwargs)
-#         except gevent.GreenletExit:
-#             raise
-#         except:
-#             logger.exception("{} raised exception in greenlet and not caught, returning the exception", func)
-#             return exc_info()[1]
-#     return traceback_decorator(decorated_func)
-
-
-
-
-
-
-# def joinall(greenlets, timeout=None, raise_error=False):
-#     """wrapper for gevent.joinall
-#     if the greenlet that waits for the joins is killed, it kills all the greenlets it joins for"""
-#     greenlets = list(greenlets)
-#     try:
-#         gevent.joinall(greenlets, timeout=timeout, raise_error=raise_error)
-#     except gevent.GreenletExit:
-#         [greenlet.kill() for greenlet in greenlets if not greenlet.ready()]
-#         raise
-#     return greenlets
-
-
-# def get_running_greenlets():
-#     from gc import get_objects
-#     return [item for item in get_objects() if isinstance(item, gevent.Greenlet) and item.started and not item.ready()]
-
-
-# def default_die_now_callback(exitcode=10, reason=None, exc_info=None):
-#     from infi.tracing import wait_and_ensure_exit
-#     from izbox.utils import sleep
-#     wait_and_ensure_exit(5, exitcode)  # wait 5 seconds before terminating the process
-
-#     try:
-#         from izbox.logging import logbook_application_setup
-#         from izbox.logging.tracing import unset_tracing
-#         if reason:
-#             logger.error(reason, exc_info=exc_info)
-#         sleep(3)  # needed for log messages to be flushed out
-#         try:
-#             logbook_application_setup.__exit__(None, None, None)  # give the logging handlers a chance to dump
-#         except AssertionError:  # this happens, not sure why
-#             pass
-
-#         unset_tracing()
-#     finally:
-#         sleep(1000000)  # never reach here.
-
-
-# def get_die_now_callback_that_generates_an_event(configuration):
-#     from izbox.events import EventFactory
-#     from izbox.utils import get_process_name
-#     from os import getpid
-#     factory = EventFactory(configuration)
-
-#     def generate_event_die_now_callback(exitcode=10, reason=None, exc_info=None):
-#         try:
-#             factory.process_suicide(name=get_process_name(), pid=getpid(), exitcode=exitcode, reason=reason,
-#                                     exc_info=exc_info)
-#         finally:
-#             default_die_now_callback(exitcode=exitcode, reason=reason, exc_info=exc_info)
-
-#     return generate_event_die_now_callback
-
-
-# die_now_callback = default_die_now_callback
-
-
-# def register_die_now_callback(callback):
-#     global die_now_callback
-#     previous_handler = die_now_callback
-#     die_now_callback = callback
-#     return previous_handler
-
-
-# def die_now_and_dont_look_back(exitcode=10, reason=None, exc_info=None):
-#     global die_now_callback
-#     die_now_callback(exitcode, reason, exc_info)
-
-
-# def get_die_now_and_dont_look_back_on_signal(signal_string):
-#     def func():
-#         die_now_and_dont_look_back(reason=signal_string)
-#     return func
-
-
-# def handle_error(context, type, value, tb):
-#     # the original function just logs the exceptions to stderr
-#     if issubclass(type, KeyboardInterrupt):
-#         original_hub_system_error(type, value)
-#         return
-#     die_now_and_dont_look_back(reason="gevent hub error: {}".format(value), exc_info=(type, value, tb))
-
-
-# def handle_system_error(type, value):
-#     # the original function just logs the exceptions to stderr
-#     die_now_and_dont_look_back(reason="gevent hub system error: {!r}".format(value), exc_info=exc_info())
-
-
-# sleep = gevent.sleep
-# getcurrent = gevent.getcurrent
-# Event = gevent.event.Event
-# AsyncResult = gevent.event.AsyncResult
-# queue = gevent.queue
-# original_hub_system_error = gevent.get_hub().handle_system_error
-# gevent.get_hub().handle_error = handle_error
-# gevent.get_hub().handle_system_error = handle_system_error
+def set_hub_error_handlers():
+    hub = gevent.get_hub()
+    original_hub_system_error = hub.handle_system_error
+
+    def handle_error(context, type, value, tb):
+        logger.error("encountered gevent hub error {}: {}".format(type, value))
+        # the original function just logs the exceptions to stderr
+        if issubclass(type, KeyboardInterrupt):
+            original_hub_system_error(type, value)
+        else:
+            uncaught_greenlet_exception()
+
+    def handle_system_error(type, value):
+        # the original function just logs the exceptions to stderr
+        logger.error("encountered gevent hub system error {}: {}".format(type, value))
+        uncaught_greenlet_exception()
+
+    gevent.get_hub().handle_error = handle_error
+    gevent.get_hub().handle_system_error = handle_system_error
+
+
+def safe_joinall(greenlets, timeout=None, raise_error=False):
+    """
+    Wrapper for gevent.joinall if the greenlet that waits for the joins is killed, it kills all the greenlets it
+    joins for.
+    """
+    greenlets = list(greenlets)
+    try:
+        gevent.joinall(greenlets, timeout=timeout, raise_error=raise_error)
+    except gevent.GreenletExit:
+        [greenlet.kill() for greenlet in greenlets if not greenlet.ready()]
+        raise
+    return greenlets

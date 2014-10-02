@@ -1,6 +1,7 @@
 import gevent
 from unittest import TestCase
-from infi.gevent_utils.gevent_loop import GeventLoopBase, loop_in_background
+from functools import partial
+from infi.gevent_utils.gevent_loop import GeventLoopBase, GeventLoop, loop_in_background
 
 
 class GeventLoopTestCase(TestCase):
@@ -27,16 +28,6 @@ class GeventLoopTestCase(TestCase):
 
         self.assertTrue(1 <= len(iters) <= 2)
 
-    def test_loop__join_timeout(self):
-        class Loopy(GeventLoopBase):
-            def _loop_callback(self):
-                pass
-
-        loopy = Loopy(0.1)
-        loopy.start()
-        self.assertFalse(loopy.join(0.2))
-        loopy.kill()
-
     def test_loop__stop_inside_loop(self):
         class Loopy(GeventLoopBase):
             def _loop_callback(self):
@@ -44,4 +35,14 @@ class GeventLoopTestCase(TestCase):
 
         loopy = Loopy(0.1)
         loopy.start()
-        self.assertTrue(loopy.join(0.2))
+        self.assertTrue(loopy.stop(0.2))
+
+    def test_loop__kill_inside_loop(self):
+        loopy = GeventLoop(0.01, partial(gevent.sleep, 10))
+        loopy.start()
+        gevent.sleep(0.1)  # make sure the loop starts
+        loopy._greenlet.kill()
+        self.assertFalse(loopy.has_started())
+
+    def test_loop__repr(self):
+        repr(GeventLoop(1, lambda: True))
