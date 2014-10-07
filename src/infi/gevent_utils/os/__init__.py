@@ -14,7 +14,7 @@ from gevent.fileobject import FileObjectThread
 from gevent.os import make_nonblocking, nb_read, nb_write
 from gevent import fork  # Ignore lint error - it's added to __all__
 
-from .deferred import create_threadpool_executed_func
+from ..deferred import create_threadpool_executed_func
 from . import path  # Ignore lint error -it's added to __all__
 
 # All os.xxx attributes were extracted from Python 2.7.6 on Ubuntu
