@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from infi.gevent_utils import path
+from infi.gevent_utils.os import path
 
 import sys
 import os

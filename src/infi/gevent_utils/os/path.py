@@ -4,7 +4,7 @@ gevent-friendly manner.
 """
 from __future__ import absolute_import
 from os import path as _path
-from .deferred import create_threadpool_executed_func
+from ..deferred import create_threadpool_executed_func
 
 CONSTS = ['altsep', 'extsep', 'pardir', 'pathsep', 'sep', 'supports_unicode_filenames']
 
