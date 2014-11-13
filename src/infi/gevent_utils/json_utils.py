@@ -2,6 +2,7 @@ from infi.pyutils.lazy import cached_function
 
 import json
 import cjson
+import time
 import gevent
 from StringIO import StringIO
 
@@ -25,8 +26,7 @@ class GreenletFriendlyStringIO(StringIO):
 
     def write(self, s):
         StringIO.write(self, s)
-        from izbox.utils import time
-        t = time()
+        t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
             self.last_sleep = t
