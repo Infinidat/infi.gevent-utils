@@ -2,11 +2,20 @@ import sys
 from infi.traceback import traceback_decorator
 from infi.pyutils.contexts import contextmanager
 import gevent
-
+import gevent.pool
 from logbook import Logger
 logger = Logger(__name__)
 
 _uncaught_exception_handler = None
+
+
+class SafeGreenlet(gevent.Greenlet):
+    def __init__(self, run, *args, **kwargs):
+        super(SafeGreenlet, self).__init__(wrap_uncaught_greenlet_exceptions(run), *args, **kwargs)
+
+
+class SafePool(gevent.pool.Pool):
+    greenlet_class = SafeGreenlet
 
 
 def set_greenlet_uncaught_exception_handler(func):
