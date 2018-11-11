@@ -15,5 +15,5 @@ class PathTestCase(GreenletCalledValidatorTestCase):
 
     def test_basename(self):
         self.switch_validator.assert_called(0)
-        self.assertEquals("a.text", path.basename("/a/b/c/a.text"))
+        self.assertEqual("a.text", path.basename("/a/b/c/a.text"))
         self.switch_validator.assert_called(0)

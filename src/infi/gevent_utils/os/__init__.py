@@ -8,6 +8,7 @@ O_NONBLOCK. So for them we need also need to defer to a thread.
 """
 from __future__ import absolute_import
 import os as _os
+import sys
 from gevent.queue import Queue
 from gevent.hub import get_hub
 from gevent.fileobject import FileObjectThread
@@ -16,6 +17,10 @@ from gevent import fork  # Ignore lint error - it's added to __all__
 
 from ..deferred import create_threadpool_executed_func
 from . import path  # Ignore lint error -it's added to __all__
+
+
+__PY3 = sys.version_info[0] == 3
+
 
 # All os.xxx attributes were extracted from Python 2.7.6 on Ubuntu
 CONSTS = [
@@ -84,19 +89,20 @@ def fdopen(fd, mode='r', buffering=-1):
 fdopen.__doc__ = _os.fdopen.__doc__
 
 
-_tmpfile = create_threadpool_executed_func(_os.tmpfile)
+if not __PY3:
+    # os.tmpfile was removed in Python 3
+    _tmpfile = create_threadpool_executed_func(_os.tmpfile)
 
-
-def tmpfile():
-    f = _tmpfile()
-    return _FileObjectThreadWithContext(f, "w+b")
-tmpfile.__doc__ = _os.tmpfile.__doc__
+    def tmpfile():
+        f = _tmpfile()
+        return _FileObjectThreadWithContext(f, "w+b")
+    tmpfile.__doc__ = _os.tmpfile.__doc__
 
 
 _open = create_threadpool_executed_func(_os.open)
 
 
-def open(file, flags, mode=0777):
+def open(file, flags, mode=0o777):
     fd = _open(file, flags, mode)
     # this is (almost) pointless since local files may block even if we set non-blocking on Linux
     # it's still interesting if the file is a named pipe, UNIX-domain socket, etc.
