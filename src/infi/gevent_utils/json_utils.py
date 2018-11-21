@@ -24,7 +24,7 @@ class GreenletFriendlyStringIO(StringIO):
         self.last_sleep = 0
 
     def write(self, s):
-        StringIO.write(self, s)
+        StringIO.write(self, s.decode('utf8'))
         t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
