@@ -13,7 +13,7 @@ class DeferredTestCase(GreenletCalledValidatorTestCase):
             pass
 
         _foo = create_threadpool_executed_func(foo)
-        self.assertEquals(_foo.__doc__, "(gevent-friendly) my_doc")
+        self.assertEqual(_foo.__doc__, "(gevent-friendly) my_doc")
 
     def test_func_without_doc(self):
         from infi.gevent_utils.deferred import create_threadpool_executed_func
@@ -22,7 +22,7 @@ class DeferredTestCase(GreenletCalledValidatorTestCase):
             pass
 
         _foo = create_threadpool_executed_func(foo)
-        self.assertEquals(_foo.__doc__, "(gevent-friendly)")
+        self.assertEqual(_foo.__doc__, "(gevent-friendly)")
 
     def test_func_exception(self):
         from infi.gevent_utils.deferred import create_threadpool_executed_func

@@ -7,7 +7,6 @@ or ``template``, just import Python's ``tempfile`` and set them.
 """
 
 from __future__ import absolute_import
-
 import tempfile as _tempfile
 from .os import _FileObjectThreadWithContext
 from .deferred import create_threadpool_executed_func

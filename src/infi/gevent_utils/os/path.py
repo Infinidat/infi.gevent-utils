@@ -2,7 +2,7 @@
 This module acts as a replacement to some of Python's `os.path` module where the blocking operations are done in a
 gevent-friendly manner.
 """
-from __future__ import absolute_import
+
 from os import path as _path
 from ..deferred import create_threadpool_executed_func
 

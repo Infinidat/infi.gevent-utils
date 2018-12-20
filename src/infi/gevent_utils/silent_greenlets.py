@@ -21,7 +21,7 @@ def wrap_uncaught_greenlet_exceptions(func):
     def _func(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except BaseException as e:
+        except BaseException:
             logger.exception("uncaught exception in greenlet")
             return SilentGreenletExceptionWrapper(sys.exc_info())
     _func.__name__ = repr(func)

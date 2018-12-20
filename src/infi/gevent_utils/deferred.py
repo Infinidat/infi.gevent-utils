@@ -1,4 +1,5 @@
 import sys
+import six
 import gevent
 
 
@@ -21,7 +22,7 @@ def create_threadpool_executed_func(original_func):
         if status:
             return result
         else:
-            raise result[0], result[1], result[2]
+            six.reraise(*result)
     new_func.__name__ = original_func.__name__
     new_func.__doc__ = "(gevent-friendly)" + (" " + original_func.__doc__ if original_func.__doc__ is not None else "")
     return new_func

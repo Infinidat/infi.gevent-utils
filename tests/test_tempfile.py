@@ -9,6 +9,7 @@ from utils import GreenletCalledValidatorTestCase
 
 
 class TempfileTestCase(GreenletCalledValidatorTestCase):
+    _TEST_BYTE_STR = "hello".encode("utf8")
     def test_TemporaryFile(self):
         # We're testing that:
         # 1. simple read/write/seek functionality works
@@ -17,11 +18,11 @@ class TempfileTestCase(GreenletCalledValidatorTestCase):
         self.switch_validator.assert_called(0)
         f = TemporaryFile()
         self.switch_validator.assert_called(1).tick()
-        f.write("hello")
+        f.write(self._TEST_BYTE_STR)
         self.switch_validator.assert_called(2).tick()
         f.seek(0)  # seek isn't deferred
-        self.switch_validator.assert_called(2)
-        self.assertEquals("hello", f.read())
+        self.switch_validator.assert_called(3)
+        self.assertEqual(self._TEST_BYTE_STR, f.read())
         self.switch_validator.assert_called(3)
 
     def test_NamedTemporaryFile(self):
@@ -34,15 +35,15 @@ class TempfileTestCase(GreenletCalledValidatorTestCase):
         f = NamedTemporaryFile()
         self.assertIsNotNone(f.name)
         self.switch_validator.assert_called(1).tick()
-        f.write("hello")
+        f.write(self._TEST_BYTE_STR)
         self.switch_validator.assert_called(2).tick()
         f.flush()
         self.switch_validator.assert_called(3).tick()
         with open(f.name, "r") as ff:
-            self.assertEquals("hello", ff.read())
+            self.assertEqual(self._TEST_BYTE_STR.decode("utf8"), ff.read())
         f.seek(0)  # seek isn't deferred
-        self.switch_validator.assert_called(3)
-        self.assertEquals("hello", f.read())
+        self.switch_validator.assert_called(4)
+        self.assertEqual(self._TEST_BYTE_STR, f.read())
         self.switch_validator.assert_called(4)
         name = f.name
         del f
@@ -73,7 +74,7 @@ class TempfileTestCase(GreenletCalledValidatorTestCase):
         d1 = gettempdir()
         self.switch_validator.assert_called(1)
         self.assertIsNotNone(tempfile.tempdir)
-        self.assertEquals(tempfile.gettempdir(), d1)
+        self.assertEqual(tempfile.gettempdir(), d1)
 
     def test_gettempdir__tempdir_is_not_none(self):
         import tempfile
@@ -81,7 +82,7 @@ class TempfileTestCase(GreenletCalledValidatorTestCase):
         self.switch_validator.assert_called(0)
         d2 = gettempdir()
         self.switch_validator.assert_called(0)
-        self.assertEquals(d1, d2)
+        self.assertEqual(d1, d2)
 
     def test_SpooledTemporaryFile(self):
-        self.assertRaises(SpooledTemporaryFile)
+        self.assertRaises(NotImplementedError, SpooledTemporaryFile)

@@ -1,10 +1,9 @@
 from infi.pyutils.lazy import cached_function
 
 import json
-import cjson
 import time
 import gevent
-from StringIO import StringIO
+from io import StringIO
 
 import logbook
 logger = logbook.Logger(__name__, level=logbook.CRITICAL)  # by default don't log errors
@@ -25,7 +24,7 @@ class GreenletFriendlyStringIO(StringIO):
         self.last_sleep = 0
 
     def write(self, s):
-        StringIO.write(self, s)
+        StringIO.write(self, s.decode('utf8'))
         t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
@@ -41,13 +40,7 @@ def can_dumps_sort_keys():
 
 def encode(python_object, indent=None, large_object=False):
     """:returns: a JSON-representation of the object"""
-    # ujson and cjson say they are considerably faster than the json module in the standard library
-    # so we wanted to use those where possible
-    # but, ujson.encode causes segmentation fault on some non-builtin objects
-    # and we get cjson.EncodeError quite a lot
-    # so we're just going to use the standard json module
-
-    # sorted keys is eaiser to read; however, Python-2.7.2 does not have this feature
+    # sorted keys is easier to read; however, Python-2.7.2 does not have this feature
     kwargs = dict(indent=indent)
     if can_dumps_sort_keys():
         kwargs.update(sort_keys=True)
@@ -65,13 +58,7 @@ def encode(python_object, indent=None, large_object=False):
 
 def decode(json_string):
     """:returns: a Python object"""
-    # unlike in encode, we haven't seen errors in decoding, so we will use cjson as a first option, since it is faster.
-    # we don't try ujson since it gets stuck on very large integers such as 2**65
     try:
-        return cjson.decode(json_string)
-    except cjson.DecodeError:
-        logger.warning("failed to decode {} via cjson", json_string)
-        try:
-            return json.loads(json_string)
-        except:
-            raise DecodeError()
+        return json.loads(json_string)
+    except:
+        raise DecodeError()

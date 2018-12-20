@@ -15,7 +15,7 @@ class AsyncOSTestCase(GreenletCalledValidatorTestCase):
         self.switch_validator.assert_called(1).tick()
         chdir(c)
         self.switch_validator.assert_called(2).tick()
-        self.assertRaises(OSError, chdir, '/non_existant_dir')
+        self.assertRaises(OSError, chdir, '/non_existent_dir')
         self.switch_validator.assert_called(3).tick()
 
     def test_fdopen(self):
@@ -25,7 +25,7 @@ class AsyncOSTestCase(GreenletCalledValidatorTestCase):
         self.switch_validator.assert_called(1).tick()
         f = os.fdopen(fd)
         self.switch_validator.assert_called(2).tick()
-        self.assertEquals('', f.read())
+        self.assertEqual('', f.read())
         self.switch_validator.assert_called(3).tick()
         f.close()
         self.switch_validator.assert_called(4).tick()
