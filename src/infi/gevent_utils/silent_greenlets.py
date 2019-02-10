@@ -4,6 +4,7 @@ greenlets that don't print exceptions to the screen and can reraise the exceptio
 
 import gevent
 import sys
+import six
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -38,7 +39,7 @@ def join(greenlet, timeout=None, raise_error=True):
     value = greenlet.get(block=True, timeout=timeout)
     if isinstance(value, SilentGreenletExceptionWrapper):
         if raise_error:
-            raise value.get_exc_info()
+            six.reraise(*value.get_exc_info())
         else:
             return None
     return value
