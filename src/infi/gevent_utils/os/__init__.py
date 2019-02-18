@@ -12,8 +12,11 @@ import sys
 from gevent.queue import Queue
 from gevent.hub import get_hub
 from gevent.fileobject import FileObjectThread
-from gevent.os import make_nonblocking, nb_read, nb_write
-from gevent import fork  # Ignore lint error - it's added to __all__
+try:
+    from gevent import fork  # Ignore lint error - it's added to __all__
+except ImportError:
+    # not available on Windows
+    pass
 
 from ..deferred import create_threadpool_executed_func
 from . import path  # Ignore lint error -it's added to __all__
@@ -59,8 +62,13 @@ NOT_IMPLEMENTED_FUNCTIONS = [
     'forkpty', 'pipe', 'popen', 'popen2', 'popen3', 'popen4'
 ]
 
+if _os.name != "nt":
+    FORK_FUNCTION = ['fork']
+else:
+    FORK_FUNCTION = []
 
-__all__ = ['path', 'fopen', 'open', 'read', 'write', 'fork'] + DEFERRED_FUNCTIONS + PASSTHROUGH_FUNCTIONS + CONSTS
+
+__all__ = ['path', 'fopen', 'open', 'read', 'write'] + FORK_FUNCTION + DEFERRED_FUNCTIONS + PASSTHROUGH_FUNCTIONS + CONSTS
 
 
 class _FileObjectThreadWithContext(FileObjectThread):
@@ -104,9 +112,12 @@ _open = create_threadpool_executed_func(_os.open)
 
 def open(file, flags, mode=0o777):
     fd = _open(file, flags, mode)
-    # this is (almost) pointless since local files may block even if we set non-blocking on Linux
-    # it's still interesting if the file is a named pipe, UNIX-domain socket, etc.
-    make_nonblocking(fd)
+    if _os.name != "nt":
+        # this is (almost) pointless since local files may block even if we set non-blocking on Linux
+        # it's still interesting if the file is a named pipe, UNIX-domain socket, etc.
+        # make_nonblocking is not available on Windows
+        from gevent.os import make_nonblocking
+        make_nonblocking(fd)
     return fd
 
 

@@ -39,8 +39,6 @@ class TempfileTestCase(GreenletCalledValidatorTestCase):
         self.switch_validator.assert_called(2).tick()
         f.flush()
         self.switch_validator.assert_called(3).tick()
-        with open(f.name, "r") as ff:
-            self.assertEqual(self._TEST_BYTE_STR.decode("utf8"), ff.read())
         f.seek(0)  # seek isn't deferred
         self.switch_validator.assert_called(4)
         self.assertEqual(self._TEST_BYTE_STR, f.read())
