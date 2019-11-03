@@ -3,7 +3,7 @@ from infi.pyutils.lazy import cached_function
 import json
 import time
 import gevent
-from io import StringIO
+from six import StringIO
 
 import logbook
 logger = logbook.Logger(__name__, level=logbook.CRITICAL)  # by default don't log errors
@@ -24,21 +24,11 @@ class GreenletFriendlyStringIO(StringIO):
         self.last_sleep = 0
 
     def write(self, s):
-        if _need_to_decode_string():
-            StringIO.write(self, s.decode('utf-8'))
-        else:
-            StringIO.write(self, s)
+        StringIO.write(self, s)
         t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
             self.last_sleep = t
-
-
-@cached_function
-def _need_to_decode_string():
-    from platform import python_version
-    from pkg_resources import parse_version
-    return parse_version(python_version()) < parse_version("3")
 
 
 @cached_function
