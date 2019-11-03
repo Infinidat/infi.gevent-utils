@@ -24,11 +24,21 @@ class GreenletFriendlyStringIO(StringIO):
         self.last_sleep = 0
 
     def write(self, s):
-        StringIO.write(self, s.decode('utf8'))
+        if _need_to_decode_string():
+            StringIO.write(self, s.decode('utf-8'))
+        else:
+            StringIO.write(self, s)
         t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
             self.last_sleep = t
+
+
+@cached_function
+def _need_to_decode_string():
+    from platform import python_version
+    from pkg_resources import parse_version
+    return parse_version(python_version()) < parse_version("3")
 
 
 @cached_function
@@ -40,7 +50,7 @@ def can_dumps_sort_keys():
 
 def encode(python_object, indent=None, large_object=False):
     """:returns: a JSON-representation of the object"""
-    # sorted keys is easier to read; however, Python-2.7.2 does not have this feature
+    # sorted keys is eaiser to read; however, Python-2.7.2 does not have this feature
     kwargs = dict(indent=indent)
     if can_dumps_sort_keys():
         kwargs.update(sort_keys=True)
