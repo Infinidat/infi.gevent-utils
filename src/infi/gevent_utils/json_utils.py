@@ -3,7 +3,7 @@ from infi.pyutils.lazy import cached_function
 import json
 import time
 import gevent
-from io import StringIO
+from six import StringIO
 
 import logbook
 logger = logbook.Logger(__name__, level=logbook.CRITICAL)  # by default don't log errors
@@ -24,7 +24,7 @@ class GreenletFriendlyStringIO(StringIO):
         self.last_sleep = 0
 
     def write(self, s):
-        StringIO.write(self, s.decode('utf8'))
+        StringIO.write(self, s)
         t = time.time()
         if t - self.last_sleep > 0.01:
             gevent.sleep(0)
@@ -40,7 +40,7 @@ def can_dumps_sort_keys():
 
 def encode(python_object, indent=None, large_object=False):
     """:returns: a JSON-representation of the object"""
-    # sorted keys is easier to read; however, Python-2.7.2 does not have this feature
+    # sorted keys is eaiser to read; however, Python-2.7.2 does not have this feature
     kwargs = dict(indent=indent)
     if can_dumps_sort_keys():
         kwargs.update(sort_keys=True)
