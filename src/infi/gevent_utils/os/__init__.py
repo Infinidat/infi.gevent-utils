@@ -84,15 +84,25 @@ _fopen = create_threadpool_executed_func(open)
 _fdopen = create_threadpool_executed_func(_os.fdopen)
 
 
+def mode_for_regular_open(mode):
+    # gevent's file objects must always work with files opened in binary mode
+    # see https://github.com/gevent/gevent/issues/1535
+    # we must translate the requested mode to one that uses binary
+    mode = mode.replace("t", "")    # remove explicit 'text' mode
+    if 'b' not in mode:
+        mode += 'b'
+    return mode
+
+
 def fopen(name, mode='r', buffering=-1):
     """Similar to Python's built-in `open()` function."""
-    f = _fopen(name, mode, buffering)
+    f = _fopen(name, mode_for_regular_open(mode), buffering)
     return _FileObjectThreadWithContext(f, mode, buffering)
 fopen.__doc__ = open.__doc__
 
 
 def fdopen(fd, mode='r', buffering=-1):
-    f = _fdopen(fd, mode, buffering)
+    f = _fdopen(fd, mode_for_regular_open(mode), buffering)
     return _FileObjectThreadWithContext(f, mode, buffering)
 fdopen.__doc__ = _os.fdopen.__doc__
 
